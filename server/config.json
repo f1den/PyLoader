@@ -1,0 +1,10 @@
+{
+    "server": {
+        "ip": "localhost",
+        "port": 1337
+    },
+
+    "crypter": {
+        "key": "1q2w3e4r5y"
+    }
+}

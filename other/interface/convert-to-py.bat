@@ -1,0 +1,1 @@
+pyuic5 loader.ui -o loader.py
