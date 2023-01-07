@@ -2,9 +2,11 @@ from ctypes.wintypes import *
 import ctypes
 import os
 import sys
+import time
 
 from handlers.defender.prohibited_processes import processes_names
 from handlers.logger.logger import Logger
+from handlers.server.server import Server
 
 PROCESS_ALL_ACCESS = 0x001F0FFF
 
@@ -36,17 +38,18 @@ def list_processes_names() -> list:
     return processes_names
 
 
-def posesses_checker():
+def prosesses_checker():
     log = Logger()
 
-    while 0.1:
+    while True:
         list_processes = list_processes_names()
         for process in processes_names:
             if process in list_processes:
                 print(f"Найден процесс {process}!")
 
-                # Отсылание лога о нарушениие на сервер!
+                # Отсылание лога о нарушении на сервер!
 
                 # Создание слиент лога
                 log.warn(f"Обнаружен процесс {process}! Закройте его, и повторите попытку.")
-                sys.exit()
+
+                os._exit(1)

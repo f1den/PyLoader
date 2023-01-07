@@ -34,17 +34,43 @@ class Server():
         while True:
             try:
                 request = client.recv(2048).decode()
+                print(request)
                 message = self.crypter.message_decrypt(request)
+                print(message)
 
                 if request and message.startswith('[') and message.endswith(']'):
                     message_list = ast.literal_eval(message)
                     message_code = message_list[0]
+                    print(message_code)
 
                     if message_code == 'login':
-                        pass
+                        username = message_list[1]
+                        password = message_list[2]
+                        hwid = message_list[3]
+
+                        login = self.db.login(username, password, hwid)
+
+                        server_message = ['login', login]
+                        server_message = self.crypter.message_encrypt(str(server_message))
+                        client.send(server_message.encode())
+                        self.log.info(f'Результат авторизации из {addres} в пользователя {username} - {login}')
 
                     if message_code == 'registration':
-                        pass
+                        username = message_list[1]
+                        password = message_list[2]
+                        hwid = message_list[3]
+                        key = message_list[4]
+
+                        registration = self.db.registration(username, password, hwid, key)
+
+                        server_message = ['registration', registration]
+                        server_message = self.crypter.message_encrypt(str(server_message))
+                        client.send(server_message.encode())
+
+                else:
+                    server_message = ['denied']
+                    client.send(server_message.encode())
+                    self.clients.remove(client)
 
             except Exception as _error:
                 self.log.info(_error)

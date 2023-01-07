@@ -11,12 +11,8 @@ class Crypter():
 
         self._hour = datetime.now(timezone.utc).time().hour
         self._date = datetime.now(timezone.utc).date().day
-        try:
-            with open('config/config.json', 'r') as config:
-                config = json.load(config)
-                self._key = config['crypter']['key']
-        except Exception as _error:
-            self._log.error(_error)
+
+        self._key = "1q2w3e4r5y"
 
     def message_encrypt(self, message):
         '''Защифровать сообщение'''

@@ -48,12 +48,12 @@ class Database():
         try:
             data_username, data_password, data_hwid = self.sql.fetchone()
         except TypeError:
-            return None
+            return "user not found"
         except Exception as _error:
             self.log.error(_error)
 
         # Проверяем логин и пароль
-        if data_username == username and data_password == data_password:
+        if data_username == username and data_password == password:
             # Проверяем хвид
             if data_hwid == hwid:
                 self.log.info(f"Пользователь {username} выполнил вход.")
