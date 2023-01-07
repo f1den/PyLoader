@@ -6,5 +6,12 @@
 
     "crypter": {
         "key": "1q2w3e4r5y"
+    },
+
+    "discord": {
+        "token": "",
+
+        "alert-channel": "",
+        "log-channel": ""
     }
 }
