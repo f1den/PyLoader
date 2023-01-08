@@ -2,12 +2,13 @@ import sqlite3
 import datetime
 import random
 import os
-from handlers.logger.logger import Logger
+from handlers.logger.logger import *
 
 
 class Database():
     def __init__(self) -> None:
         self.log = Logger()
+        self.dis = Discord()
         try:
             # Подключение к бд
             self.db = sqlite3.connect('database/database.db', check_same_thread=False)
@@ -64,7 +65,7 @@ class Database():
 
     def login(self, ip, username: str, password: str, hwid: str):
         ban_check = self.ban_check(ip, hwid)
-        print(ban_check)
+
         self.sql.execute(f"SELECT username, password, hwid FROM users WHERE username = '{username}'")
 
         try:
@@ -73,7 +74,7 @@ class Database():
             return "user not found"
         except Exception as _error:
             self.log.error(_error)
-
+            self.dis.log(_error)
 
         # Проверяем логин и пароль
         if ban_check == "not banned":
@@ -81,6 +82,7 @@ class Database():
                 # Проверяем хвид
                 if data_hwid == hwid:
                     self.log.info(f"Пользователь {username} выполнил вход.")
+                    self.dis.log(f"Пользователь {username} выполнил вход.")
                     return "success"
                 elif data_hwid is None:
                     self.sql.execute(f"UPDATE users SET hwid = '{hwid}' WHERE username = '{username}'")
@@ -92,12 +94,14 @@ class Database():
                     return "hwid not success"
 
         elif ban_check == "banned":
-            if data_username == username and data_password == password:
+            if data_username == username and data_password == password and data_hwid == hwid:
                 self.sql.execute(f"UPDATE users SET status = ? WHERE username = ?", ('banned', username,))
                 self.db.commit()
                 return "banned"
 
     def registration(self, ip, username: str, password: str, hwid: str, key: str):
+        ban_check = self.ban_check(ip, hwid)
+
         self.sql.execute(f"SELECT status, days FROM keys WHERE key = ?", (key,))
 
         try:
@@ -110,19 +114,25 @@ class Database():
         if data_status != "new":
             return "key is already activated"
 
-        self.sql.execute(f"SELECT username FROM users WHERE username = ?", (username,))
-        if self.sql.fetchone() is not None:
-            return "user already exists"
+        if ban_check == "not banned":
+            self.sql.execute(f"SELECT username FROM users WHERE username = ?", (username,))
+            if self.sql.fetchone() is not None:
+                return "user already exists"
 
-        self.sql.execute(f"INSERT INTO users VALUES (?, ?, ?, ?, ?)", (None, username, password, hwid, "active"))
-        self.db.commit()
-        self.log.info(f'Создан пользователь {username}.')
+            self.sql.execute(f"INSERT INTO users VALUES (?, ?, ?, ?, ?)", (None, username, password, hwid, "active"))
+            self.db.commit()
+            self.log.info(f'Создан пользователь {username}.')
 
-        endtime = datetime.datetime.now().date() + datetime.timedelta(days=int(data_days))
-        self.sql.execute(f"UPDATE keys SET status = 'use', owner = ?, endtime = ? WHERE key = ?", (username, endtime, key,))
-        self.db.commit()
-        self.log.info(f"Ключ {key} активирован пользователем {username}.")
-        return "registration success"
+            endtime = datetime.datetime.now().date() + datetime.timedelta(days=int(data_days))
+            self.sql.execute(f"UPDATE keys SET status = 'use', owner = ?, endtime = ? WHERE key = ?", (username, endtime, key,))
+            self.db.commit()
+            self.log.info(f"Ключ {key} активирован пользователем {username}.")
+            return "registration success"
+
+        elif ban_check == "banned":
+            self.sql.execute("UPDATE keys SET status = 'banned' WHERE key = ?", (key,))
+            self.db.commit()
+            self.log.warn('Забанен ключ ' + key)
 
     def ban_check(self, ip, hwid):
         self.sql.execute(f"SELECT * FROM bans WHERE ip = ? AND hwid = ?", (ip, hwid))

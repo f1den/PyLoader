@@ -9,6 +9,7 @@ import pymemoryapi
 from handlers.csl_interface.interface import *
 from handlers.crypter.crypter import *
 from handlers.database.db_handler import *
+from handlers.logger.logger import *
 
 
 class Server():
@@ -16,6 +17,7 @@ class Server():
         self.crypter = Crypter()
         self.db = Database()
         self.log = Logger()
+        self.dis = Discord()
         self.interface = Interface()
 
         with open('config/config.json', 'r') as config:
@@ -32,6 +34,7 @@ class Server():
 
     def client_socket_listener(self, client, addres):
         self.clients.append(client)
+        print(self.clients)
 
         while True:
             try:
@@ -55,6 +58,7 @@ class Server():
                         server_message = self.crypter.message_encrypt(str(server_message))
                         client.send(server_message.encode())
                         self.log.info(f'Результат авторизации из {addres} в пользователя {username} - {login}')
+                        self.dis.user(f'Результат авторизации из {addres} в пользователя {username} - {login}')
 
                     elif message_code == 'registration':
                         username = message_list[1]
@@ -95,9 +99,11 @@ class Server():
     def listen_connections(self):
         self.clients = []
         self.log.info('Серевер запущен.')
+        self.dis.log('Серевер запущен.')
         while True:
             client_socket, client_addres = self.server.accept()
             threading.Thread(target=self.client_socket_listener, args=(client_socket, client_addres)).start()
+            self.dis.log(f'Новое подключение из {client_addres}')
             self.log.info(f'Новое подключение из {client_addres}')
 
 

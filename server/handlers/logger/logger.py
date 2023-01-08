@@ -1,5 +1,8 @@
 import os
 import datetime
+import json
+
+from discord_webhook import DiscordWebhook, DiscordEmbed
 
 FILE_NAME = str(datetime.datetime.now().today().replace(microsecond=0)).replace(':', '.')
 
@@ -34,3 +37,30 @@ class Logger():
     def _write_log(self, log: str):
         with open(f'logs/{str(FILE_NAME)}.txt', 'a', encoding='utf-8') as log_file:
             log_file.write(log)
+
+
+class Discord():
+    def __init__(self) -> None:
+        with open('config/config.json') as config:
+            self.config = json.load(config)
+
+        self.banhook = self.config['discord']['ban-channel']
+        self.warnhook = self.config['discord']['warn-channel']
+        self.loghook = self.config['discord']['logs-channel']
+        self.usershook = self.config['discord']['users-channel']
+
+    def ban(self, text: str):
+        webhook = DiscordWebhook(url=self.banhook, content=text)
+        webhook.execute()
+
+    def warn(self, text: str):
+        webhook = DiscordWebhook(url=self.warnhook, content=text)
+        webhook.execute()
+
+    def log(self, text: str):
+        webhook = DiscordWebhook(url=self.loghook, content=text)
+        webhook.execute()
+
+    def user(self, text: str):
+        webhook = DiscordWebhook(url=self.usershook, content=text)
+        webhook.execute()

@@ -11,7 +11,7 @@ class Server():
         self.crypter = Crypter()
         self.log = Logger()
 
-    def _server_connection(self):
+    def server_connection(self):
         try:
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client.connect(('localhost', 1337))
@@ -21,9 +21,7 @@ class Server():
             os._exit(1)
 
     def send_message(self, message):
-        self._server_connection()
-        cmessage = self.crypter.message_encrypt(message)
-        print(cmessage)
+        cmessage = self.crypter.message_encrypt(str(message))
         self.client.send(cmessage.encode())
 
         while True:
@@ -34,10 +32,9 @@ class Server():
             if server_message and server_message.startswith('[') and server_message.endswith(']'):
                 message_list = ast.literal_eval(server_message)
                 message_code = message_list[0]
+                print(message_code)
 
-                if message_code == "registration" and "login":
+                if message_code == "registration" or message_code == "login":
                     return message_list[1]
                 elif message_code == "denied":
                     os._exit(1)
-                else:
-                    print(message_list)

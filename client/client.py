@@ -9,7 +9,7 @@ import threading
 # Ипрот файла интерфейса
 from interface.loader import Ui_Loader
 # Импорт прочих обрабртчиков
-from handlers.server.server import Server
+from handlers.server.server import *
 from handlers.logger.logger import Logger
 from handlers.defender.anticrack import prosesses_checker
 
@@ -24,6 +24,8 @@ class Loader(QtWidgets.QWidget):
         self.loader_ui.setupUi(self)
         self.server = Server()
         self.log = Logger()
+
+        self.server.server_connection()
 
         # Получаем hwid
         self.hwid = str(subprocess.check_output('wmic csproduct get uuid'), 'utf-8').split('\n')[1].strip()
@@ -52,7 +54,8 @@ class Loader(QtWidgets.QWidget):
 
         if username and password:
             message = ['login', username, password, self.hwid]
-            self.server.send_message(str(message))
+            result = self.server.send_message(str(message))
+            self.message_box(str(result))
 
     def registration(self):
         username = self.loader_ui.lineEdit_reg_username.text()
@@ -61,7 +64,8 @@ class Loader(QtWidgets.QWidget):
 
         if username and password and key:
             message = ['registration', username, password, self.hwid, key]
-            self.server.send_message(str(message))
+            result = self.server.send_message(str(message))
+            self.message_box(str(result))
 
     def registration_menu(self):
         global reg_menu
@@ -73,6 +77,9 @@ class Loader(QtWidgets.QWidget):
         else:
             self.loader_ui.frame_login.show()
             self.loader_ui.frame_register.hide()
+
+    def message_box(self, text):
+        QtWidgets.QMessageBox.about(self, 'message', text)
 
 
 if __name__ == "__main__":

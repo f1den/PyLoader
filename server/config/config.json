@@ -9,9 +9,9 @@
     },
 
     "discord": {
-        "token": "",
-
-        "alert-channel": "",
-        "log-channel": ""
+        "ban-channel": "https://discord.com/api/webhooks/1061672293526421584/aXIIH7ZPFNMvAiUi27HiKcOi_b1q8Cu1u5zh-RlghKZ_i5k4xT4NBVKjTRq6F3uLdjbh",
+        "warn-channel": "https://discord.com/api/webhooks/1061672109530689698/oaHoSi3x42KDVCnCjoTBdbBIE0bvGzxCkkep_BErgZkPp-1qBntl3lu0SZvHMjArQD5D",
+        "logs-channel": "https://discord.com/api/webhooks/1061667685932470402/k5S7g3pCJMtYJjILosmTlSD6ME-CSIlqnz_ik1M59THln76pGgftFO7AqbH8qVRnWfzr",
+        "users-channel": "https://discord.com/api/webhooks/1061672382911217785/hT-eDstONFR0hov8wh3-WwbYezbGh75y4dNF7rVHfbamqIrxvjc_3N6NqSyIq2gEIoRk"
     }
 }
