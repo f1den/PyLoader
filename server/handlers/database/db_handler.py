@@ -1,5 +1,7 @@
 import sqlite3
 import datetime
+import random
+import os
 from handlers.logger.logger import Logger
 
 
@@ -10,7 +12,6 @@ class Database():
             # Подключение к бд
             self.db = sqlite3.connect('database/database.db', check_same_thread=False)
             self.sql = self.db.cursor()
-            self.log.info("База данных подключена.")
         except Exception as _error:
             self.log.error(_error)
         finally:
@@ -93,3 +94,28 @@ class Database():
         self.db.commit()
         self.log.info(f"Ключ {key} активирован пользователем {username}.")
         return "registration success"
+
+    def key_gen(self, key_type: str, days: int, count: int):
+        chars = '-abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+        lenght = 32
+
+        if not os.path.exists('keys'):
+            os.mkdir('keys')
+
+        file_name = "Key gen - " + str(datetime.datetime.now().today().replace(microsecond=0)).replace(':', '.')
+
+        for n in range(count):
+            key = ''
+            for i in range(lenght):
+                key += random.choice(chars)
+
+            key = key + "-" + days
+            self.sql.execute(f'SELECT key FROM keys WHERE key = ?', (key,))
+
+            if self.sql.fetchone() is None:
+                self.sql.execute(f"INSERT INTO keys VALUES (?, ?, ?, ?, ?, ?, ?)", (None, key, key_type, 'new', days, None, None))
+                with open(f'keys/{file_name}.txt', 'a') as output:
+                    output.write(key + '\n')
+
+        self.db.commit()
+        self.log.info(f"Сгенерерировнно {count} {key_type} ключей на {days} дней.")

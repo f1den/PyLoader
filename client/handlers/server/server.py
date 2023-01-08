@@ -17,7 +17,6 @@ class Server():
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client.connect(('localhost', 1337))
             self.log.info("Подключение к серверу установленно.")
-            print(self.crypter.message_encrypt("123"))
         except ConnectionRefusedError:
             self.log.error("Сервер не доступен!")
             os._exit(1)

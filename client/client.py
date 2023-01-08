@@ -24,7 +24,7 @@ class Loader(QtWidgets.QWidget):
         self.loader_ui.setupUi(self)
         self.server = Server()
         self.log = Logger()
-        
+
         # Включем чекер процессов
         threading.Thread(target=prosesses_checker).start()
 

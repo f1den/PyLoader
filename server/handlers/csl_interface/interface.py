@@ -1,50 +1,89 @@
 import os
 import time
+from pick import pick
+
+from handlers.database.db_handler import *
 
 
-class Menu():
-    def __init__(self) -> None:
-        self.main_menu_render()
+class Interface():
 
-    def gen_key_menu(self):
-        self.clear()
-        print("--- Генерация ключей ---")
-        print("[1] Сгенерировать один ключ.")
-        print("[2] Сгенерировать несколько ключей.")
-        print("[0] Выйти в меню")
+    def key_gen(self):
+        title = 'Генерация ключей.'
+        options = ['Сгенерировать один ключ.', 'Сгенерировать несколько ключей.', 'Выйти в меню']
 
-        try:
-            select = int(input(">>> "))
-        except ValueError:
-            print("Для ввода доступны только цифры!")
-            time.sleep(1.5)
-            self.gen_key_menu()
+        selected = pick(options, title, multiselect=False, min_selection_count=0)
 
-        if select == 0:
-            self.main_menu_render()
-        else:
-            print("Раздел не нейден!")
-            time.sleep(1.5)
-            self.gen_key_menu()
+        if selected[1] == 0:
+            title = 'Выберите тип ключа.'
+            options = ['beta', 'test', 'Отмена']
 
-    def main_menu_render(self):
-        self.clear()
-        print("--- Основное меню ---")
-        print("[1] Генерация ключей.")
+            selected = pick(options, title, multiselect=False, min_selection_count=0)
 
-        try:
-            select = int(input(">>> "))
-        except ValueError:
-            print("Для ввода доступны только цифры!")
-            time.sleep(1.5)
-            self.main_menu_render()
+            if selected[0] == 'Отмена':
+                self.key_gen()
 
-        if select == 1:
-            self.gen_key_menu()
-        else:
-            print("Раздел не нейден!")
-            time.sleep(1.5)
-            self.main_menu_render()
+            key_type = selected[0]
 
-    def clear(self):
-        os.system('cls')
+            title = 'Выберите срок действия ключа'
+            options = ['1', '7', '14', '30', '60', '90', '999', 'Отмена']
+
+            selected = pick(options, title, multiselect=False, min_selection_count=0)
+
+            if selected[0] == 'Отмена':
+                self.key_gen()
+
+            key_days = selected[0]
+            self.db.key_gen(key_type, key_days, 1)
+            self.main_menu()
+
+        elif selected[1] == 1:
+            title = 'Выберите тип ключей.'
+            options = ['beta', 'test', 'Отмена']
+
+            selected = pick(options, title, multiselect=False, min_selection_count=0)
+
+            if selected[0] == 'Отмена':
+                self.key_gen()
+
+            key_type = selected[0]
+
+            title = 'Выберите срок действия ключей.'
+            options = ['1', '7', '14', '30', '60', '90', '999', 'Отмена']
+
+            selected = pick(options, title, multiselect=False, min_selection_count=0)
+
+            if selected[0] == 'Отмена':
+                self.key_gen()
+
+            key_days = selected[0]
+
+            title = 'Выберите количество ключей для генерации.'
+            options = ['5', '10', '20', '50', '100', '200', '500', 'Отмена']
+
+            selected = pick(options, title, multiselect=False, min_selection_count=0)
+
+            if selected[0] == 'Отмена':
+                self.key_gen()
+
+            key_count = int(selected[0])
+
+            self.db.key_gen(key_type, key_days, key_count)
+
+            self.main_menu()
+
+        elif selected[0] == 'Выйти в меню':
+            self.main_menu()
+
+    def main_menu(self):
+        self.db = Database()
+        title = 'Основное меню.'
+        options = ['Генерация ключей', 'Управление пользователями', 'test']
+
+        selected = pick(options, title, multiselect=False, min_selection_count=0)
+
+        if selected[1] == 0:
+            self.key_gen()
+        elif selected[1] == 1:
+            pass
+        elif selected[1] == 2:
+            pass

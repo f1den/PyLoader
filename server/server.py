@@ -13,9 +13,10 @@ from handlers.database.db_handler import *
 
 class Server():
     def __init__(self) -> None:
-        self.db = Database()
         self.crypter = Crypter()
+        self.db = Database()
         self.log = Logger()
+        self.interface = Interface()
 
         with open('config/config.json', 'r') as config:
             config = json.load(config)
@@ -27,6 +28,7 @@ class Server():
         self.server.listen()
 
         threading.Thread(target=self.listen_connections).start()
+        threading.Thread(target=self.interface.main_menu()).start()
 
     def client_socket_listener(self, client, addres):
         self.clients.append(client)
@@ -34,14 +36,11 @@ class Server():
         while True:
             try:
                 request = client.recv(2048).decode()
-                print(request)
                 message = self.crypter.message_decrypt(request)
-                print(message)
 
                 if request and message.startswith('[') and message.endswith(']'):
                     message_list = ast.literal_eval(message)
                     message_code = message_list[0]
-                    print(message_code)
 
                     if message_code == 'login':
                         username = message_list[1]
