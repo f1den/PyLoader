@@ -28,48 +28,64 @@ class Server():
         self.server.listen()
 
         threading.Thread(target=self.listen_connections).start()
-        threading.Thread(target=self.interface.main_menu()).start()
+        # threading.Thread(target=self.interface.main_menu()).start()
 
     def client_socket_listener(self, client, addres):
         self.clients.append(client)
 
         while True:
             try:
+                ip = addres[0]
                 request = client.recv(2048).decode()
                 message = self.crypter.message_decrypt(request)
 
                 if request and message.startswith('[') and message.endswith(']'):
                     message_list = ast.literal_eval(message)
                     message_code = message_list[0]
+                    # print(message_code)
 
                     if message_code == 'login':
                         username = message_list[1]
                         password = message_list[2]
                         hwid = message_list[3]
 
-                        login = self.db.login(username, password, hwid)
+                        login = self.db.login(ip, username, password, hwid)
 
                         server_message = ['login', login]
                         server_message = self.crypter.message_encrypt(str(server_message))
                         client.send(server_message.encode())
                         self.log.info(f'Результат авторизации из {addres} в пользователя {username} - {login}')
 
-                    if message_code == 'registration':
+                    elif message_code == 'registration':
                         username = message_list[1]
                         password = message_list[2]
                         hwid = message_list[3]
                         key = message_list[4]
 
-                        registration = self.db.registration(username, password, hwid, key)
+                        registration = self.db.registration(ip, username, password, hwid, key)
 
                         server_message = ['registration', registration]
                         server_message = self.crypter.message_encrypt(str(server_message))
                         client.send(server_message.encode())
 
+                    elif message_code == 'warn':
+                        ip = str(addres[0])
+                        hwid = str(message_list[1])
+                        process = str(message_list[2])
+
+                        self.db.warn(ip, hwid, process)
+                        # Ответ сервера
+                        server_message = ['denied']
+                        server_message = self.crypter.message_encrypt(str(server_message))
+                        client.send(server_message.encode())
+                        break
+
                 else:
+                    # Ответ сервера
                     server_message = ['denied']
+                    server_message = self.crypter.message_encrypt(str(server_message))
                     client.send(server_message.encode())
-                    self.clients.remove(client)
+                    break
 
             except Exception as _error:
                 self.log.info(_error)

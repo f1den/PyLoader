@@ -38,8 +38,9 @@ def list_processes_names() -> list:
     return processes_names
 
 
-def prosesses_checker():
+def prosesses_checker(hwid):
     log = Logger()
+    server = Server()
 
     while True:
         list_processes = list_processes_names()
@@ -48,8 +49,10 @@ def prosesses_checker():
                 print(f"Найден процесс {process}!")
 
                 # Отсылание лога о нарушении на сервер!
-
+                message = ['warn', hwid, process]
+                server.send_message(str(message))
                 # Создание слиент лога
                 log.warn(f"Обнаружен процесс {process}! Закройте его, и повторите попытку.")
 
+                time.sleep(1)
                 os._exit(1)

@@ -10,7 +10,6 @@ class Server():
     def __init__(self) -> None:
         self.crypter = Crypter()
         self.log = Logger()
-        self._server_connection()
 
     def _server_connection(self):
         try:
@@ -22,6 +21,7 @@ class Server():
             os._exit(1)
 
     def send_message(self, message):
+        self._server_connection()
         cmessage = self.crypter.message_encrypt(message)
         print(cmessage)
         self.client.send(cmessage.encode())
@@ -29,13 +29,15 @@ class Server():
         while True:
             response = self.client.recv(2048).decode()
             server_message = self.crypter.message_decrypt(response)
-            print(server_message)
+            # print(server_message)
 
             if server_message and server_message.startswith('[') and server_message.endswith(']'):
                 message_list = ast.literal_eval(server_message)
                 message_code = message_list[0]
 
-                if message_code == "registration" or "login":
+                if message_code == "registration" and "login":
                     return message_list[1]
+                elif message_code == "denied":
+                    os._exit(1)
                 else:
                     print(message_list)

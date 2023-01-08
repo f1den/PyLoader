@@ -25,11 +25,10 @@ class Loader(QtWidgets.QWidget):
         self.server = Server()
         self.log = Logger()
 
-        # Включем чекер процессов
-        threading.Thread(target=prosesses_checker).start()
-
         # Получаем hwid
         self.hwid = str(subprocess.check_output('wmic csproduct get uuid'), 'utf-8').split('\n')[1].strip()
+        # Включем чекер процессов
+        threading.Thread(target=prosesses_checker, args=(self.hwid,)).start()
 
         # Скрываем панель регистрации
         self.loader_ui.frame_register.hide()

@@ -1,6 +1,8 @@
 import os
 import datetime
 
+FILE_NAME = str(datetime.datetime.now().today().replace(microsecond=0)).replace(':', '.')
+
 
 class Logger():
     def __init__(self) -> None:
@@ -10,7 +12,6 @@ class Logger():
 
         # Дата время и имя файла
         self._date = str(datetime.datetime.now().today().replace(microsecond=0)).replace(':', '.')
-        self._file_name = self._date
 
     # Передача типа лога в записть
     def info(self, text: str):
@@ -31,5 +32,5 @@ class Logger():
 
     # Записть лога в файл
     def _write_log(self, log: str):
-        with open(f'logs/{str(self._file_name)}.txt', 'a', encoding='utf-8') as log_file:
+        with open(f'logs/{str(FILE_NAME)}.txt', 'a', encoding='utf-8') as log_file:
             log_file.write(log)

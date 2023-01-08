@@ -43,7 +43,28 @@ class Database():
             """)
         self.db.commit()
 
-    def login(self, username: str, password: str, hwid: str):
+        self.sql.execute("""CREATE TABLE IF NOT EXISTS "warns" (
+            "id" INTEGER NOT NULL,
+            "ip" VARCHAR(128) NOT NULL,
+            "hwid" VARCHAR(128) NOT NULL,
+            "process" VARCHAR(128) NOT NULL,
+            PRIMARY KEY("id" AUTOINCREMENT)
+            );
+            """)
+        self.db.commit()
+
+        self.sql.execute("""CREATE TABLE IF NOT EXISTS "bans" (
+            "id" INTEGER NOT NULL,
+            "ip" VARCHAR(128),
+            "hwid" VARCHAR(128),
+            PRIMARY KEY("id" AUTOINCREMENT)
+            );
+            """)
+        self.db.commit()
+
+    def login(self, ip, username: str, password: str, hwid: str):
+        ban_check = self.ban_check(ip, hwid)
+        print(ban_check)
         self.sql.execute(f"SELECT username, password, hwid FROM users WHERE username = '{username}'")
 
         try:
@@ -53,22 +74,30 @@ class Database():
         except Exception as _error:
             self.log.error(_error)
 
-        # Проверяем логин и пароль
-        if data_username == username and data_password == password:
-            # Проверяем хвид
-            if data_hwid == hwid:
-                self.log.info(f"Пользователь {username} выполнил вход.")
-                return "success"
-            elif data_hwid is None:
-                self.sql.execute(f"UPDATE users SET hwid = '{hwid}' WHERE username = '{username}'")
-                self.db.commit()
-                self.log.info(f"У пользователя {username} обновлен hwid на {hwid}")
-                return "success"
-            else:
-                self.log.info(f"Попытка авторизации в пользователя {username} с несовподающим hwid!")
-                return "hwid not success"
 
-    def registration(self, username: str, password: str, hwid: str, key: str):
+        # Проверяем логин и пароль
+        if ban_check == "not banned":
+            if data_username == username and data_password == password:
+                # Проверяем хвид
+                if data_hwid == hwid:
+                    self.log.info(f"Пользователь {username} выполнил вход.")
+                    return "success"
+                elif data_hwid is None:
+                    self.sql.execute(f"UPDATE users SET hwid = '{hwid}' WHERE username = '{username}'")
+                    self.db.commit()
+                    self.log.info(f"У пользователя {username} обновлен hwid на {hwid}")
+                    return "success"
+                else:
+                    self.log.info(f"Попытка авторизации в пользователя {username} с несовподающим hwid!")
+                    return "hwid not success"
+
+        elif ban_check == "banned":
+            if data_username == username and data_password == password:
+                self.sql.execute(f"UPDATE users SET status = ? WHERE username = ?", ('banned', username,))
+                self.db.commit()
+                return "banned"
+
+    def registration(self, ip, username: str, password: str, hwid: str, key: str):
         self.sql.execute(f"SELECT status, days FROM keys WHERE key = ?", (key,))
 
         try:
@@ -94,6 +123,27 @@ class Database():
         self.db.commit()
         self.log.info(f"Ключ {key} активирован пользователем {username}.")
         return "registration success"
+
+    def ban_check(self, ip, hwid):
+        self.sql.execute(f"SELECT * FROM bans WHERE ip = ? AND hwid = ?", (ip, hwid))
+        if self.sql.fetchone() is None:
+            return "not banned"
+        return "banned"
+
+    def warn(self, ip, hwid, process):
+        self.sql.execute(f"INSERT INTO warns VALUES (?, ?, ?, ?)", (None, ip, hwid, process))
+        self.db.commit()
+        self.log.warn(f"На пк {ip} - {hwid} обнаружен {process}")
+
+        self.sql.execute(f"SELECT count(hwid) FROM warns WHERE hwid = ?", (hwid,))
+        warns_count = int(self.sql.fetchone()[0])
+
+        if warns_count >= 10:
+            self.sql.execute("SELECT id FROM bans WHERE ip = ? or hwid = ?", (ip, hwid))
+            if self.sql.fetchone() is None:
+                self.sql.execute("INSERT INTO bans VALUES (?, ?, ?)", (None, ip, hwid))
+                self.db.commit()
+                self.log.warn(f"Забанен {ip}, {hwid}, количество варнов {warns_count}.")
 
     def key_gen(self, key_type: str, days: int, count: int):
         chars = '-abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
