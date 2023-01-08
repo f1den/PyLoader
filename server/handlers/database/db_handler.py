@@ -95,9 +95,19 @@ class Database():
 
         elif ban_check == "banned":
             if data_username == username and data_password == password and data_hwid == hwid:
-                self.sql.execute(f"UPDATE users SET status = ? WHERE username = ?", ('banned', username,))
-                self.db.commit()
-                return "banned"
+                self.sql.execute(f"SELECT * FROM users WHERE username = ? AND status = ?", (username, 'banned'))
+
+                if self.sql.fetchone() is None:
+
+                    self.sql.execute(f"UPDATE users SET status = ? WHERE username = ?", ('banned', username,))
+                    self.db.commit()
+
+                    log = f'Забанен пользователь {username}, {ip}, {hwid}'
+                    self.log.warn(log)
+                    self.dis.ban(log)
+                    return "banned"
+                else:
+                    return "banned"
 
     def registration(self, ip, username: str, password: str, hwid: str, key: str):
         ban_check = self.ban_check(ip, hwid)
@@ -121,18 +131,24 @@ class Database():
 
             self.sql.execute(f"INSERT INTO users VALUES (?, ?, ?, ?, ?)", (None, username, password, hwid, "active"))
             self.db.commit()
-            self.log.info(f'Создан пользователь {username}.')
 
             endtime = datetime.datetime.now().date() + datetime.timedelta(days=int(data_days))
             self.sql.execute(f"UPDATE keys SET status = 'use', owner = ?, endtime = ? WHERE key = ?", (username, endtime, key,))
             self.db.commit()
-            self.log.info(f"Ключ {key} активирован пользователем {username}.")
+
+            log = f'Зарегестрирован новый пользователь {username}, ключ {key}'
+            self.log.info(log)
+            self.dis.user(log)
             return "registration success"
 
         elif ban_check == "banned":
             self.sql.execute("UPDATE keys SET status = 'banned' WHERE key = ?", (key,))
             self.db.commit()
-            self.log.warn('Забанен ключ ' + key)
+
+            log = f'Забанен ключ {key}'
+            self.log.info(log)
+            self.dis.ban(log)
+            return "banned"
 
     def ban_check(self, ip, hwid):
         self.sql.execute(f"SELECT * FROM bans WHERE ip = ? AND hwid = ?", (ip, hwid))
@@ -143,17 +159,23 @@ class Database():
     def warn(self, ip, hwid, process):
         self.sql.execute(f"INSERT INTO warns VALUES (?, ?, ?, ?)", (None, ip, hwid, process))
         self.db.commit()
-        self.log.warn(f"На пк {ip} - {hwid} обнаружен {process}")
 
         self.sql.execute(f"SELECT count(hwid) FROM warns WHERE hwid = ?", (hwid,))
         warns_count = int(self.sql.fetchone()[0])
+
+        log = f'На пк {ip}, {hwid}, обнаружен {process}, количество варнов {warns_count}'
+        self.log.warn(log)
+        self.dis.warn(log)
 
         if warns_count >= 10:
             self.sql.execute("SELECT id FROM bans WHERE ip = ? or hwid = ?", (ip, hwid))
             if self.sql.fetchone() is None:
                 self.sql.execute("INSERT INTO bans VALUES (?, ?, ?)", (None, ip, hwid))
                 self.db.commit()
-                self.log.warn(f"Забанен {ip}, {hwid}, количество варнов {warns_count}.")
+
+                log = f'Забанен {ip}, {hwid}, количество варнов {warns_count}'
+                self.log.warn(log)
+                self.dis.ban(log)
 
     def key_gen(self, key_type: str, days: int, count: int):
         chars = '-abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
@@ -178,4 +200,6 @@ class Database():
                     output.write(key + '\n')
 
         self.db.commit()
-        self.log.info(f"Сгенерерировнно {count} {key_type} ключей на {days} дней.")
+        log = f"Сгенерерировнно {count} {key_type} ключей на {days} дней."
+        self.log.info(log)
+        self.dis.log(log)

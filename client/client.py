@@ -25,7 +25,7 @@ class Loader(QtWidgets.QWidget):
         self.server = Server()
         self.log = Logger()
 
-        self.server.server_connection()
+        # self.server.server_connection()
 
         # Получаем hwid
         self.hwid = str(subprocess.check_output('wmic csproduct get uuid'), 'utf-8').split('\n')[1].strip()

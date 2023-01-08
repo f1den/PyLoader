@@ -10,8 +10,9 @@ class Server():
     def __init__(self) -> None:
         self.crypter = Crypter()
         self.log = Logger()
+        self._server_connection()
 
-    def server_connection(self):
+    def _server_connection(self):
         try:
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client.connect(('localhost', 1337))
@@ -21,7 +22,7 @@ class Server():
             os._exit(1)
 
     def send_message(self, message):
-        cmessage = self.crypter.message_encrypt(str(message))
+        cmessage = self.crypter.message_encrypt(message)
         self.client.send(cmessage.encode())
 
         while True:

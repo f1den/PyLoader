@@ -57,8 +57,6 @@ class Server():
                         server_message = ['login', login]
                         server_message = self.crypter.message_encrypt(str(server_message))
                         client.send(server_message.encode())
-                        self.log.info(f'Результат авторизации из {addres} в пользователя {username} - {login}')
-                        self.dis.user(f'Результат авторизации из {addres} в пользователя {username} - {login}')
 
                     elif message_code == 'registration':
                         username = message_list[1]
